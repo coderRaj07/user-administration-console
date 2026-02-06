@@ -18,7 +18,7 @@ import {
 } from "@mui/material";
 import { useDebounce } from "../hooks/useDebounce";
 
-const PAGE_SIZE = 5;
+const PAGE_SIZE = 2;
 
 export default function UsersPage() {
   const [search, setSearch] = useState("");

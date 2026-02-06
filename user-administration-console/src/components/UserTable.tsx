@@ -14,10 +14,14 @@ import type { User } from "../types/user";
 interface Props {
   users: User[];
   onEdit: (user: User) => void;
-  onDelete: (id: number) => void;
+  onRequestDelete: (id: number) => void;
 }
 
-export default function UserTable({ users, onEdit, onDelete }: Props) {
+export default function UserTable({
+  users,
+  onEdit,
+  onRequestDelete,
+}: Props) {
   if (users.length === 0) {
     return <p>No users found</p>;
   }
@@ -56,7 +60,7 @@ export default function UserTable({ users, onEdit, onDelete }: Props) {
                     size="small"
                     color="error"
                     variant="outlined"
-                    onClick={() => onDelete(user.id!)}
+                    onClick={() => onRequestDelete(user.id!)}
                   >
                     Delete
                   </Button>

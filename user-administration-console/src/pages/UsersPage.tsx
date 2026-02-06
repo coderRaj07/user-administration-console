@@ -6,10 +6,11 @@ import {
   deleteUser,
 } from "../api/users.api";
 import UserForm from "../components/UserForm";
+import UserTable from "../components/UserTable";
+import ConfirmDialog from "../components/ConfirmDialog";
 import type { User } from "../types/user";
 import {
   Stack,
-  Button,
   CircularProgress,
   Alert,
   TextField,
@@ -26,7 +27,12 @@ export default function UsersPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
   const [editingUser, setEditingUser] = useState<User | null>(null);
+
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<number | null>(null);
+
   const [page, setPage] = useState(1);
 
   const loadUsers = async () => {
@@ -57,12 +63,13 @@ export default function UsersPage() {
       .includes(debouncedSearch.toLowerCase())
   );
 
-  // 📄 Paginate users
+  // 📄 Pagination
   const start = (page - 1) * PAGE_SIZE;
   const paginatedUsers = filteredUsers.slice(start, start + PAGE_SIZE);
 
   return (
     <Stack spacing={3}>
+      {/* ➕ Create / ✏️ Update */}
       <UserForm
         initialData={editingUser ?? undefined}
         onSubmit={async (data) => {
@@ -108,36 +115,53 @@ export default function UsersPage() {
       {/* ❌ Error */}
       {error && <Alert severity="error">{error}</Alert>}
 
-      {/* 📄 User List */}
-      {!loading &&
-        paginatedUsers.map((u) => (
-          <Stack
-            key={u.id}
-            direction="row"
-            spacing={2}
-            alignItems="center"
-          >
-            <span>
-              {u.firstName} {u.lastName} ({u.email})
-            </span>
-            <Button onClick={() => setEditingUser(u)}>Edit</Button>
-            <Button
-              color="error"
-              onClick={async () => {
-                await deleteUser(u.id!);
-                loadUsers();
-              }}
-            >
-              Delete
-            </Button>
-          </Stack>
-        ))}
+      {/* 📄 User Table */}
+      {!loading && (
+        <UserTable
+          users={paginatedUsers}
+          onEdit={(user) => setEditingUser(user)}
+          onRequestDelete={(id) => {
+            setUserToDelete(id);
+            setConfirmOpen(true);
+          }}
+        />
+      )}
 
       {/* 📚 Pagination */}
       <Pagination
         count={Math.ceil(filteredUsers.length / PAGE_SIZE)}
         page={page}
         onChange={(_, value) => setPage(value)}
+      />
+
+      {/* 🛑 Confirm Delete */}
+      <ConfirmDialog
+        open={confirmOpen}
+        title="Delete User"
+        description="Are you sure you want to delete this user? This action cannot be undone."
+        onCancel={() => {
+          setConfirmOpen(false);
+          setUserToDelete(null);
+        }}
+        onConfirm={async () => {
+          if (!userToDelete) return;
+
+          try {
+            setLoading(true);
+            await deleteUser(userToDelete);
+            await loadUsers();
+          } catch (err: unknown) {
+            if (err instanceof Error) {
+              setError(err.message);
+            } else {
+              setError("Something went wrong");
+            }
+          } finally {
+            setLoading(false);
+            setConfirmOpen(false);
+            setUserToDelete(null);
+          }
+        }}
       />
     </Stack>
   );

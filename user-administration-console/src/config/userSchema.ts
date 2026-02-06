@@ -1,4 +1,5 @@
 import * as yup from "yup";
+import type { User } from "../types/user";
 
 export const userFields = [
   {
@@ -27,22 +28,17 @@ export const userFields = [
   },
 ] as const;
 
-export const userValidationSchema = yup.object(
-  userFields.reduce<yup.ObjectShape>((acc, field) => {
-    let validator = yup.string();
 
-    if (field.required) {
-      validator = validator.required(`${field.label} is required`);
-    }
 
-    if (field.name === "email") {
-      validator = validator.email("Invalid email");
-    }
+export const userValidationSchema: yup.Schema<Omit<User, "id">> = yup
+  .object({
+    firstName: yup.string().required("First name is required"),
+    lastName: yup.string().required("Last name is required"),
+    email: yup.string().email("Invalid email").required("Email is required"),
+    phone: yup.string().required("Phone is required"),
+  })
+  .required();
 
-    acc[field.name] = validator;
-    return acc;
-  }, {})
-);
 
 
 // TODO: test by adding dob example later
